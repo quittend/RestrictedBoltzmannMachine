@@ -1,0 +1,7 @@
+Plik hosts powinien zawierać listę hostów na których chcemy uruchomić obliczenia.
+
+kompilacja:
+mpic++ -o rbm main.cpp RestrictedBoltzmannMachine.cpp Utility.cpp -std=c++11 -lblas
+
+uruchomienie:
+mpirun -n 4 -f hosts ./rbm
