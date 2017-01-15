@@ -20,28 +20,12 @@ namespace Utility {
 
     void saveWeights(const std::string& filename, const std::shared_ptr<double>& weights, const int visible, const int hidden) {
         std::ofstream out(filename, std::ios::out);
-        // std::cout << "W1 visible=" << visible << " " << hidden << "\n";
-        // int n=0;
-
-        // std::ofstream myFile2 (std::string("results_before_save.bin"), std::ios::out | std::ios::binary);
-        // myFile2.write ((char*)weights.get(), visible*hidden*sizeof(double));
-        // myFile2.close();
-
-        // for(int i=0; i<visible*hidden; ++i) {
-        //     std::cout << i << " ";
-        //     std::cout << weights.get()[i] << "\n";
-        // }
-        // std::cout << "\n";
-
         for(int i = 0; i < visible; i++) {
             for(int j = 0; j < hidden; j++) {
-                // std::cout << "TEST " << ++n << " index=" << j + hidden*i << " i=" << i << " j=" << j << "\n";
                 out << std::setprecision(2) << std::fixed << (weights.get()[j + hidden*i] >= 0.0 ? "+" : "") << weights.get()[j + hidden*i] << " ";
             }
             out << std::endl;
         }
-        // std::cout << "M  n=" << n << "\n";
-        // out.write(ss.str().c_str(), ss.str().length());
         out.close();
     }
 
@@ -88,7 +72,6 @@ namespace Utility {
             int imageSize = nRows * nCols;
             numberOfImages = count;
 
-            // std::cout << "AAAA " << imageSize << "\n";
             std::shared_ptr<double> dataset = std::shared_ptr<double>(new double[numberOfImages * imageSize], std::default_delete<double[]>());
             unsigned char* temp = new unsigned char[numberOfImages * imageSize];
             for (int i = 0; i < numberOfImages; i++)
@@ -167,32 +150,29 @@ namespace Utility {
         MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
         int world_size;
         MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-        std::cout << "W" << world_rank << " EXCHENGE\n";
+        LOG("W" << world_rank << " exchanging deltas\n");
         int j=1; // jump length
         for(int n=0; n<ceil(log2(world_size)); ++n) {
-            std::cout << "W" << world_rank << " iteration " << n << "\n";
             if((world_rank-1)%(2*j)-j < 0) {
                 if(world_rank+j < world_size) {
-                    std::cout << "W" << world_rank << " merge with " << world_rank+j << "\n";
+                    LOG("W" << world_rank << " merge deltas with peer " << world_rank+j << "\n");
                     mergeWithPeer(d, world_rank+j, visible, hidden);
                 }
             } else {
-                std::cout << "W" << world_rank << " merge with " << world_rank-j << "\n";
+                LOG("W" << world_rank << " merge deltas with peer " << world_rank-j << "\n");
                 mergeWithPeer(d, world_rank-j, visible, hidden);
             }
             j*=2;
         }
         if((world_size-1)%(j/2) != 0) { // wyslij delty do peerow ktorzy nie brali udzialu w ostatniej wymianie
-            std::cout << "W" << world_rank << " uzupelnienie\n";
             int firstPeer = (world_size-1)%(j/2)+1;
             int lastPeer = j/2;
             if(world_rank == 1) {
                 for(int s=firstPeer; s<=lastPeer; ++s) {
-                    std::cout << "W" << world_rank << " send to " << s << "\n";
+                    LOG("W" << world_rank << " send deltas to peer " << s << "\n");
                     sendDeltas(d, s, visible, hidden);
                 }
             } else if(world_rank >= firstPeer && world_rank <= lastPeer) {
-                std::cout << "W" << world_rank << " receive from 1\n";
                 d = recvDeltas(1, visible, hidden);
             }
         }

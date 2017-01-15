@@ -6,6 +6,14 @@
 #define INIT_WEIGHT_MIN -0.1
 #define INIT_WEIGHT_MAX 0.1
 
+#define DISABLE_LOG
+
+#ifndef DISABLE_LOG
+#define LOG(message) {std::cout << message;}
+#else
+#define LOG(message) ;
+#endif
+
 namespace Utility {
 
     extern const unsigned int SND_BATCH;
